@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/ces_qc_hld_plugin" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
