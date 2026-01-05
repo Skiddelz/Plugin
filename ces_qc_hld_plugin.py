@@ -22,7 +22,7 @@ class CESQCPlugin:
         # (The improved version I gave you last time)
         # It will run when the toolbar button or menu item is clicked
         try:
-            # Your code starts here...
+            # Our code starts here...
             import processing
             import getpass
             import os
