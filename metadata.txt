@@ -5,15 +5,15 @@
 [general]
 name=CES HLD QC Tool
 qgisMinimumVersion=3.0
-description=QC tool for disconnected poles and chambers within a selected polygon
+description=QC tool to locate disconnected poles and chambers from routes within a selected polygon
 version=1
 author=Skiddelzzz
 email=zziehl@gmail.com
 
 about=QC tool for disconnected poles and chambers within a selected polygon
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/Skiddelz/Plugin/issues
+repository=https://github.com/Skiddelz/Plugin.git
 # End of mandatory metadata
 
 # Recommended items:
@@ -25,7 +25,10 @@ hasProcessingProvider=no
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=http://homepage
+#License
+license=GPL-3.0+
+
+homepage=https://github.com/Skiddelz/Plugin.git
 category=Plugins
 icon=icon.png
 # experimental flag
