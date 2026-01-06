@@ -5,7 +5,7 @@
 [general]
 name=CES HLD QC Tool
 qgisMinimumVersion=3.0
-description=QC tool to locate disconnected poles and chambers from routes within a selected polygon
+description=QC tool to locate disconnected poles and chambers from routes
 version=1
 author=Skiddelzzz
 email=zziehl@gmail.com
