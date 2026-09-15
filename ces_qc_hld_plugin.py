@@ -27,12 +27,20 @@ class CESQCPlugin:
             import getpass
             import os
             from qgis.core import QgsProject, QgsGeometry, QgsFeatureRequest
-# Get the layers by name (update if your layer names differ)
-            poles_layer = QgsProject.instance().mapLayersByName('poles')[0]
-            route_layer = QgsProject.instance().mapLayersByName('route')[0]
-            chambers_layer = QgsProject.instance().mapLayersByName('chambers')[0]
-            demand_points_layer = QgsProject.instance().mapLayersByName('demand_points')[0]
-            drops_layer = QgsProject.instance().mapLayersByName('fibre_cable')[0]
+
+# Look up a layer by name, ignoring case, with a clear error if it's missing
+            def get_layer(layer_name):
+                for layer in QgsProject.instance().mapLayers().values():
+                    if layer.name().lower() == layer_name.lower():
+                        return layer
+                raise Exception(f" Whhhhhhhhoooopppps '{layer_name}' layer not found. Please make sure it is loaded in the project and named correctly.")
+
+# Get the layers by name (case-insensitive; update if your layer names differ)
+            poles_layer = get_layer('poles')
+            route_layer = get_layer('route')
+            chambers_layer = get_layer('chambers')
+            demand_points_layer = get_layer('demand_points')
+            drops_layer = get_layer('fibre_cable')
             username = getpass.getuser()
 # Step 1: Fix geometries on the routes (line) layer to avoid errors
             fix_result = processing.run("native:fixgeometries", {
