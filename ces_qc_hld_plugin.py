@@ -22,16 +22,17 @@ class CESQCPlugin:
         # (The improved version I gave you last time)
         # It will run when the toolbar button or menu item is clicked
         try:
-            # Our code starts here...
+            # Your code starts here...
             import processing
             import getpass
             import os
-            from qgis.core import QgsProject, QgsGeometry
-            from qgis.core import QgsProject
+            from qgis.core import QgsProject, QgsGeometry, QgsFeatureRequest
 # Get the layers by name (update if your layer names differ)
             poles_layer = QgsProject.instance().mapLayersByName('poles')[0]
             route_layer = QgsProject.instance().mapLayersByName('route')[0]
             chambers_layer = QgsProject.instance().mapLayersByName('chambers')[0]
+            demand_points_layer = QgsProject.instance().mapLayersByName('demand_points')[0]
+            drops_layer = QgsProject.instance().mapLayersByName('fibre_cable')[0]
             username = getpass.getuser()
 # Step 1: Fix geometries on the routes (line) layer to avoid errors
             fix_result = processing.run("native:fixgeometries", {
@@ -87,6 +88,55 @@ class CESQCPlugin:
             extracted_layer.setName('Disconnected_Chambers')  # Change this to your preferred name
 
             print(username,f"(Diconnected Chambers are Done)")
+
+# Step 4: Fix geometries on the drops (fibre cable, pole-to-demand-point) layer
+            fix_drops_result = processing.run("native:fixgeometries", {
+                'INPUT': drops_layer,
+                'OUTPUT': 'memory:'
+            })
+            fixed_drops = fix_drops_result['OUTPUT']
+            fixed_drops.setName('Fixed Drops (memory)')
+            print(username,f"(Fixed the drop cable geometries)")
+
+# Step 5: Extract demand points that are disjoint (not served by a drop cable) from the fixed drops
+            temp_demand_points = processing.runAndLoadResults("native:extractbylocation", {
+                'INPUT': demand_points_layer,
+                'PREDICATE': [2],  # 2 corresponds to 'disjoint' (no spatial relationship)
+                'INTERSECT': fixed_drops,
+                'OUTPUT': 'TEMPORARY_OUTPUT'
+            })
+# Get the ID of the newly created extracted layer
+            extracted_layer_id = temp_demand_points['OUTPUT']
+
+# Retrieve the layer object and rename it
+            extracted_layer = QgsProject.instance().mapLayer(extracted_layer_id)
+            extracted_layer.setName('Disconnected_Demand_Points')  # Change this to your preferred name
+            print(username,f"(Demand points are done)")
+
+# Step 6: Flag duplicate geometries (same coordinates digitized twice) in each layer
+            def extract_duplicate_features(source_layer, result_name):
+                seen_geometries = {}
+                for feature in source_layer.getFeatures():
+                    wkt_key = feature.geometry().asWkt(13)  # rounded WKT so identical coords always match
+                    seen_geometries.setdefault(wkt_key, []).append(feature.id())
+                duplicate_fids = [fid for fids in seen_geometries.values() if len(fids) > 1 for fid in fids]
+                duplicate_layer = source_layer.materialize(QgsFeatureRequest().setFilterFids(duplicate_fids))
+                duplicate_layer.setName(result_name)
+                QgsProject.instance().addMapLayer(duplicate_layer)
+                return len(duplicate_fids)
+
+            duplicate_poles_count = extract_duplicate_features(poles_layer, 'Duplicate_Poles')
+            print(username, f"(Duplicate poles found: {duplicate_poles_count})")
+
+            duplicate_routes_count = extract_duplicate_features(fixed_routes, 'Duplicate_Routes')
+            print(username, f"(Duplicate routes found: {duplicate_routes_count})")
+
+            duplicate_chambers_count = extract_duplicate_features(chambers_layer, 'Duplicate_Chambers')
+            print(username, f"(Duplicate chambers found: {duplicate_chambers_count})")
+
+            duplicate_demand_points_count = extract_duplicate_features(demand_points_layer, 'Duplicate_Demand_Points')
+            print(username, f"(Duplicate demand points found: {duplicate_demand_points_count})")
+
 #Should be done.
             print(username,f"(Script made it to the end XD)")
             # ... rest of your script ...
